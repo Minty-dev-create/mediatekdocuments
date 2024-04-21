@@ -6,9 +6,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System.Configuration;
+using Serilog;
 
 namespace MediaTekDocuments.dal
 {
+
     /// <summary>
     /// Classe d'accès aux données
     /// </summary>
@@ -17,7 +19,7 @@ namespace MediaTekDocuments.dal
         /// <summary>
         /// adresse de l'API
         /// </summary>
-        private static readonly string uriApi = "http://localhost/rest_mediatekdocuments/";
+        private static readonly string uriApi = "https://restmediatekdocuments.minty-dev-create.fr/";
         /// <summary>
         /// instance unique de la classe
         /// </summary>
@@ -36,7 +38,12 @@ namespace MediaTekDocuments.dal
         private const string POST = "POST";
         /// <summary>
         /// méthode HTTP pour update
-
+        /// </summary>
+        private const string PUT = "PUT";
+        /// <summary>
+        /// méthode HTTP pour delete
+        /// </summary>
+        private const string DELETE = "DELETE";
         /// <summary>
         /// Méthode privée pour créer un singleton
         /// initialise l'accès à l'API
@@ -47,6 +54,12 @@ namespace MediaTekDocuments.dal
             try
             {
                 authenticationString = "admin:adminpwd";
+
+                Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.File("logs/log.txt",
+                rollingInterval: RollingInterval.Day)
+                .CreateLogger();
                 api = ApiRest.GetInstance(uriApi, authenticationString);
             }
             catch (Exception e)
@@ -76,6 +89,7 @@ namespace MediaTekDocuments.dal
         public List<Categorie> GetAllGenres()
         {
             IEnumerable<Genre> lesGenres = TraitementRecup<Genre>(GET, "genre");
+            Log.Information("Récupération des genres");
             return new List<Categorie>(lesGenres);
         }
 
@@ -86,6 +100,7 @@ namespace MediaTekDocuments.dal
         public List<Categorie> GetAllRayons()
         {
             IEnumerable<Rayon> lesRayons = TraitementRecup<Rayon>(GET, "rayon");
+            Log.Information("Récupération des rayons");
             return new List<Categorie>(lesRayons);
         }
 
@@ -96,6 +111,7 @@ namespace MediaTekDocuments.dal
         public List<Categorie> GetAllPublics()
         {
             IEnumerable<Public> lesPublics = TraitementRecup<Public>(GET, "public");
+            Log.Information("Récupération des publics");
             return new List<Categorie>(lesPublics);
         }
 
@@ -106,6 +122,7 @@ namespace MediaTekDocuments.dal
         public List<Livre> GetAllLivres()
         {
             List<Livre> lesLivres = TraitementRecup<Livre>(GET, "livre");
+            Log.Information("Récupération des livres");
             return lesLivres;
         }
 
@@ -116,6 +133,7 @@ namespace MediaTekDocuments.dal
         public List<Dvd> GetAllDvd()
         {
             List<Dvd> lesDvd = TraitementRecup<Dvd>(GET, "dvd");
+            Log.Information("Récupération des DVD");
             return lesDvd;
         }
 
@@ -126,7 +144,38 @@ namespace MediaTekDocuments.dal
         public List<Revue> GetAllRevues()
         {
             List<Revue> lesRevues = TraitementRecup<Revue>(GET, "revue");
+            Log.Information("Récupération des revues");
             return lesRevues;
+        }
+
+        /// <summary>
+        /// Retourne touts les utilisateurs à partir de la BDD
+        /// </summary>
+        /// <returns>Liste d'objets Utilisateur</returns>
+        public Utilisateur GetUtilisateur(string username, string password)
+        {
+            var login = new { username = username, password = password };
+            String jsonIdDocument = JsonConvert.SerializeObject(login);
+            List<Utilisateur> lesUtilisateurs = TraitementRecup<Utilisateur>(GET, "utilisateur/" + jsonIdDocument);
+
+            if (lesUtilisateurs != null && lesUtilisateurs.Count > 0)
+            {
+                Log.Information(username + " " + "s\'est connecté");
+                return lesUtilisateurs[0];
+            }
+            Log.Error("Échec de la connection");
+            return null;
+        }
+
+        /// <summary>
+        /// Retourne toutes les revues à partir de la BDD
+        /// </summary>
+        /// <returns>Liste d'objets Revue</returns>
+        public List<Suivi> GetAllSuivi()
+        {
+            List<Suivi> suivis = TraitementRecup<Suivi>(GET, "suivi");
+            Log.Information("Récupération des suivis");
+            return suivis;
         }
 
 
@@ -139,7 +188,44 @@ namespace MediaTekDocuments.dal
         {
             String jsonIdDocument = convertToJson("id", idDocument);
             List<Exemplaire> lesExemplaires = TraitementRecup<Exemplaire>(GET, "exemplaire/" + jsonIdDocument);
+            Log.Information("Récupération des exemplaires");
             return lesExemplaires;
+        }
+
+        /// <summary>
+        /// Retourne les exemplaires d'un livre
+        /// </summary>
+        /// <param name="idLivre">id du livre concerné</param>
+        /// <returns>Liste d'objets Exemplaire</returns>
+        public List<CommandeDocument> GetCommandesLivres(string idLivre)
+        {
+            String jsonIdDocument = convertToJson("id", idLivre);
+            List<CommandeDocument> lesCommandesLivres = TraitementRecup<CommandeDocument>(GET, "commandedocument/" + jsonIdDocument);
+            Log.Information("Récupération des commandes de livres");
+            return lesCommandesLivres;
+        }
+
+        /// <summary>
+        /// Retourne les exemplaires d'un dvd
+        /// </summary>
+        /// <param name="idDvd">id du dvd concerné</param>
+        /// <returns>Liste d'objets Exemplaire</returns>
+        public List<CommandeDocument> GetCommandesDvd(string idDvd)
+        {
+            String jsonIdDocument = convertToJson("id", idDvd);
+            List<CommandeDocument> lesCommandesDvd = TraitementRecup<CommandeDocument>(GET, "commandedocument/" + jsonIdDocument);
+            Log.Information("Récupération des commandes de DVD");
+            return lesCommandesDvd;
+        }
+
+        /// <summary>
+        /// Obtention de l'ID max
+        /// </summary>
+        public string GetMaxCommandeId()
+        {
+            JObject retour = api.RecupDistant(GET, "maxcommande");
+            var resultat = (string)retour["result"][0]["MAX(CAST(id AS UNSIGNED))"];
+            return resultat;
         }
 
         /// <summary>
@@ -153,13 +239,153 @@ namespace MediaTekDocuments.dal
             try {
                 // récupération soit d'une liste vide (requête ok) soit de null (erreur)
                 List<Exemplaire> liste = TraitementRecup<Exemplaire>(POST, "exemplaire/" + jsonExemplaire);
+                Log.Information("Exemplaire ajouté");
                 return (liste != null);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
             }
             return false; 
+        }
+
+        /// <summary>
+        /// ecriture d'une commande de livre en base de données
+        /// </summary>
+        /// <param name="commandeLivre">commande livre à insérer</param>
+        /// <returns>true si l'insertion a pu se faire (retour != null)</returns>
+        public bool CreerCommandeLivre(CommandeDocument commandeLivre)
+        {
+            String jsonCommandeLivre = JsonConvert.SerializeObject(commandeLivre, new CustomDateTimeConverter());
+            try
+            {
+                // récupération soit d'une liste vide (requête ok) soit de null (erreur)
+                List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(POST, "commandedocument/" + jsonCommandeLivre);
+                Log.Information("Commande de livre ajoutée");
+                return (liste != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// ecriture d'une commande de dvd en base de données
+        /// </summary>
+        /// <param name="commandeDvd">commande livre à insérer</param>
+        /// <returns>true si l'insertion a pu se faire (retour != null)</returns>
+        public bool CreerCommandeDvd(CommandeDocument commandeDvd)
+        {
+            String jsonCommandeDvd = JsonConvert.SerializeObject(commandeDvd, new CustomDateTimeConverter());
+            try
+            {
+                // récupération soit d'une liste vide (requête ok) soit de null (erreur)
+                List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(POST, "commandedocument/" + jsonCommandeDvd);
+                Log.Information("Commande de dvd ajoutée");
+                return (liste != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// suppression d'une commande de livre en base de données
+        /// </summary>
+        /// <param name="commandeLivre">commande livre à insérer</param>
+        /// <returns>true si l'insertion a pu se faire (retour != null)</returns>
+        public bool SupprimerCommandeLivre(CommandeDocument commandeLivre)
+        {
+            String jsonCommandeLivre = JsonConvert.SerializeObject(commandeLivre, new CustomDateTimeConverter());
+            try
+            {
+                // récupération soit d'une liste vide (requête ok) soit de null (erreur)
+                List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(DELETE, "commandedocument/" + jsonCommandeLivre);
+                Log.Information("Commande de livre supprimée");
+                return (liste != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// suppression d'une commande de livre en base de données
+        /// </summary>
+        /// <param name="commandeDvd">commande livre à insérer</param>
+        /// <returns>true si l'insertion a pu se faire (retour != null)</returns>
+        public bool SupprimerCommandeDvd(CommandeDocument commandeDvd)
+        {
+            String jsonCommandeDvd = JsonConvert.SerializeObject(commandeDvd, new CustomDateTimeConverter());
+            try
+            {
+                // récupération soit d'une liste vide (requête ok) soit de null (erreur)
+                List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(DELETE, "commandedocument/" + jsonCommandeDvd);
+                Log.Information("Commande de DVD supprimée");
+                return (liste != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// modification d'une commande de livre en base de données
+        /// </summary>
+        /// <param name="commandeLivre">commande livre à modifier</param>
+        /// <returns>true si la modification a pu se faire (retour != null)</returns>
+        public bool UpdateCommandeLivre(CommandeDocument commandeLivre)
+        {
+            String jsonCommandeLivre = JsonConvert.SerializeObject(commandeLivre, new CustomDateTimeConverter());
+            try
+            {
+                // récupération soit d'une liste vide (requête ok) soit de null (erreur)
+                List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(PUT, "commandedocument/" + jsonCommandeLivre);
+                Log.Information("Commande de livre modifiée");
+                return (liste != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// modification d'une commande de dvd en base de données
+        /// </summary>
+        /// <param name="commandeDvd">commande livre à modifier</param>
+        /// <returns>true si la modification a pu se faire (retour != null)</returns>
+        public bool UpdateCommandeDvd(CommandeDocument commandeDvd)
+        {
+            String jsonCommandeDvd = JsonConvert.SerializeObject(commandeDvd, new CustomDateTimeConverter());
+            try
+            {
+                // récupération soit d'une liste vide (requête ok) soit de null (erreur)
+                List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(PUT, "commandedocument/" + jsonCommandeDvd);
+                Log.Information("Commande de DVD modifiée");
+                return (liste != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Log.Error(ex.Message);
+            }
+            return false;
         }
 
         /// <summary>
@@ -172,6 +398,7 @@ namespace MediaTekDocuments.dal
         private List<T> TraitementRecup<T> (String methode, String message)
         {
             List<T> liste = new List<T>();
+            Console.WriteLine("TraitementRecup : " + methode + " " + message);
             try
             {
                 JObject retour = api.RecupDistant(methode, message);
@@ -190,10 +417,12 @@ namespace MediaTekDocuments.dal
                 else
                 {
                     Console.WriteLine("code erreur = " + code + " message = " + (String)retour["message"]);
+                    Log.Error("code erreur = " + code + " message = " + (String)retour["message"]);
                 }
             }catch(Exception e)
             {
                 Console.WriteLine("Erreur lors de l'accès à l'API : "+e.Message);
+                Log.Error("Erreur lors de l'accès à l'API : " + e.Message);
                 Environment.Exit(0);
             }
             return liste;

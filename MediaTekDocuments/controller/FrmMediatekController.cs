@@ -59,6 +59,15 @@ namespace MediaTekDocuments.controller
         }
 
         /// <summary>
+        /// getter sur la liste des utilisateurs
+        /// </summary>
+        /// <returns>Liste d'objets Utilisateur</returns>
+        public Utilisateur GetUtilisateur(string username, string password)
+        {
+            return access.GetUtilisateur(username, password);
+        }
+
+        /// <summary>
         /// getter sur les rayons
         /// </summary>
         /// <returns>Liste d'objets Rayon</returns>
@@ -76,6 +85,16 @@ namespace MediaTekDocuments.controller
             return access.GetAllPublics();
         }
 
+        /// <summary>
+        /// récupère les suivis
+        /// </summary>
+        /// <param name="suivis">L'objet suivis concerné</param>
+        /// <returns>True si la création a pu se faire</returns>
+        public List<Suivi> GetSuivis()
+        {
+            return access.GetAllSuivi();
+        }
+
 
         /// <summary>
         /// récupère les exemplaires d'une revue
@@ -88,6 +107,26 @@ namespace MediaTekDocuments.controller
         }
 
         /// <summary>
+        /// récupère les exemplaires d'un livre
+        /// </summary>
+        /// <param name="idLivre">id du livre concerné</param>
+        /// <returns>Liste d'objets Exemplaire</returns>
+        public List<CommandeDocument> GetCommandesLivres(string idLivre)
+        {
+            return access.GetCommandesLivres(idLivre);
+        }
+
+        /// <summary>
+        /// récupère les exemplaires d'un livre
+        /// </summary>
+        /// <param name="idDvd">id du livre concerné</param>
+        /// <returns>Liste d'objets Exemplaire</returns>
+        public List<CommandeDocument> GetCommandesDvd(string idDvd)
+        {
+            return access.GetCommandesDvd(idDvd);
+        }
+
+        /// <summary>
         /// Crée un exemplaire d'une revue dans la bdd
         /// </summary>
         /// <param name="exemplaire">L'objet Exemplaire concerné</param>
@@ -96,5 +135,74 @@ namespace MediaTekDocuments.controller
         {
             return access.CreerExemplaire(exemplaire);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string GetCommandesLivresMaxId()
+        {
+            return access.GetMaxCommandeId();
+        }
+
+        /// <summary>
+        /// Crée une commande de livre dans la bdd
+        /// </summary>
+        /// <param name="commandeLivre">L'objet Exemplaire concerné</param>
+        /// <returns>True si la création a pu se faire</returns>
+        public bool CreerCommandeLivre(CommandeDocument commandeLivre)
+        {
+            return access.CreerCommandeLivre(commandeLivre);
+        }
+
+        /// <summary>
+        /// Crée une commande de dvd dans la bdd
+        /// </summary>
+        /// <param name="commandeDvd">L'objet Exemplaire concerné</param>
+        /// <returns>True si la création a pu se faire</returns>
+        public bool CreerCommandeDvd(CommandeDocument commandeDvd)
+        {
+            return access.CreerCommandeDvd(commandeDvd);
+        }
+
+        /// <summary>
+        /// Modifier une commande de livre dans la bdd
+        /// </summary>
+        /// <param name="commandeLivre">L'objet Exemplaire concerné</param>
+        /// <returns>True si la modification a pu se faire</returns>
+        public bool UpdateCommandeLivre(CommandeDocument commandeLivre)
+        {
+            return access.UpdateCommandeLivre(commandeLivre);
+        }
+
+        /// <summary>
+        /// Modifier une commande de dvd dans la bdd
+        /// </summary>
+        /// <param name="commandeDvd">L'objet Exemplaire concerné</param>
+        /// <returns>True si la modification a pu se faire</returns>
+        public bool UpdateCommandeDvd(CommandeDocument commandeDvd)
+        {
+            return access.UpdateCommandeDvd(commandeDvd);
+        }
+
+        /// <summary>
+        /// Modifier une commande de livre dans la bdd
+        /// </summary>
+        /// <param name="commandeLivre">L'objet Exemplaire concerné</param>
+        /// <returns>True si la modification a pu se faire</returns>
+        public bool SupprimerCommandeLivre(CommandeDocument commandeLivre)
+        {
+            return access.SupprimerCommandeLivre(commandeLivre);
+        }
+
+        /// <summary>
+        /// Modifier une commande de livre dans la bdd
+        /// </summary>
+        /// <param name="commandeDvd">L'objet Exemplaire concerné</param>
+        /// <returns>True si la modification a pu se faire</returns>
+        public bool SupprimerCommandeDvd(CommandeDocument commandeDvd)
+        {
+            return access.SupprimerCommandeDvd(commandeDvd);
+        }
+
     }
 }
