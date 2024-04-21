@@ -6,3 +6,5 @@
 /.vs/MediaTekDocuments/v16
 /MediaTekDocuments/bin/Debug
 /packages
+/.vs
+/MediaTekDocuments/obj/Release
